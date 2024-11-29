@@ -176,13 +176,13 @@ If the file is a symbolic link, `lstat` returns `0` (success). If the file is no
 
 Now that the `lstat` is well defined, we can explain how the `is_symlink` Function Works:
 
-- The function calls the `lstat` system call on the provided file path.
-- The `stat` structure returned by `lstat` contains various file attributes, including the file type.
-- The `S_ISLNK` macro is used to check if the file type is a symbolic link by evaluating the `st_mode` field of the `stat` structure.
-- If the file is a symbolic link, the function returns `1`. If it is not a symbolic link, it returns `0`.
-- If `lstat` returns `-1`, indicating an error (e.g., if the file does not exist), the function prints an error message and returns `-1`.
+	- The function calls the `lstat` system call on the provided file path.
+	- The `stat` structure returned by `lstat` contains various file attributes, including the file type.
+	- The `S_ISLNK` macro is used to check if the file type is a symbolic link by evaluating the `st_mode` field of the `stat` structure.
+	- If the file is a symbolic link, the function returns `1`. If it is not a symbolic link, it returns `0`.
+	- If `lstat` returns `-1`, indicating an error (e.g., if the file does not exist), the function prints an error message and returns `-1`.
 
-![Figure 11 The ll command](images/issymlink.png){ width=60% }
+![Figure 11 The `is_symlink` function](images/issymlink.png){ width=60% }
 
 The second function is the `is_invalid_symlink` function, it enhances the symbolic link validation by resolving the actual path of the symbolic link using realpath and then checking if the resolved path points to restricted directories like /etc or /root. If the resolved path starts with one of these restricted directories, it returns 1, indicating that the symbolic link is invalid and should not be allowed. It ensures that sensitive system files are not inadvertently exposed.
 The function uses realpath, which resolves the absolute path of a symbolic link or a file, following all symbolic links in the path and returning the final target.
