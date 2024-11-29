@@ -115,14 +115,23 @@ Since the input file `test_in2.txt` was a symbolic link, the program followed th
 To illustrate the exploit; the end goal was to copy the content of `/etc/shadow` into the `test_out.txt`
 
 The following screenshots demonstrate the exploit:
+
+
 We first run the program with two test files; an input test file `test_in2.txt` and an output test file `test_out.txt`
+
 ![Figure 7: Running the Program](images/attack.png){ width=60% }
+
 We then run the ln command at the same time as the program is running before returning `y` into the original program running.
+
 ![Figure 8: The ln command](images/commandranforexploit.png){ width=60% }
+
 To check the linking, we run the ll command output in the directory, and it shows that that test_in2.txt is indeed a symbolic link pointing to `/etc/shadow`.
+
 ![Figure 9: The ll command](images/llrights.png){ width=60% }
+
 Then, we check the content of `test_out.txt`, and it shows the content of `/etc/shadow`, which proves that the vulnerability succeeded.
-![Figure 9: The ll command](images/proofetcshadowcopied.png){ width=60% }
+
+![Figure 10 The ll command](images/proofetcshadowcopied.png){ width=60% }
 
 
 
