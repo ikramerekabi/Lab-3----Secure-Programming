@@ -166,7 +166,7 @@ The primary patch for the vulnerability involves better handling of symbolic lin
 
 This is achieved by adding two functions to the code.
 
-- `is_symlink` Function**
+- **`is_symlink` Function**
 
 The `is_symlink` function checks if a given file is a symbolic link. A symbolic link is a special type of file that points to another file or directory, allowing for redirection of operations.
 
@@ -176,30 +176,31 @@ If the file is a symbolic link, `lstat` returns `0` (success). If the file is no
 
 Now that the `lstat` is well defined, we can explain how the `is_symlink` Function Works:
 
-	- The function calls the `lstat` system call on the provided file path.
-	- The `stat` structure returned by `lstat` contains various file attributes, including the file type.
-	- The `S_ISLNK` macro is used to check if the file type is a symbolic link by evaluating the `st_mode` field of the `stat` structure.
-	- If the file is a symbolic link, the function returns `1`. If it is not a symbolic link, it returns `0`.
-	- If `lstat` returns `-1`, indicating an error (e.g., if the file does not exist), the function prints an error message and returns `-1`.
+First, the function calls the `lstat` system call on the provided file path. The `stat` structure returned by `lstat` contains various file attributes, including the file type and the `S_ISLNK` macro which is used to check if the file type is a symbolic link by evaluating the `st_mode` field of the `stat` structure.
+If the file is a symbolic link, the function returns `1`. If it is not a symbolic link, it returns `0`. And, if `lstat` returns `-1`, indicating an error (e.g., if the file does not exist), the function prints an error message and returns `-1`.
 
 ![Figure 11 The `is_symlink` function](images/issymlink.png){ width=60% }
 
-The second function is the `is_invalid_symlink` function, it enhances the symbolic link validation by resolving the actual path of the symbolic link using realpath and then checking if the resolved path points to restricted directories like /etc or /root. If the resolved path starts with one of these restricted directories, it returns 1, indicating that the symbolic link is invalid and should not be allowed. It ensures that sensitive system files are not inadvertently exposed.
-The function uses realpath, which resolves the absolute path of a symbolic link or a file, following all symbolic links in the path and returning the final target.
-It returns the canonicalized absolute pathname of the file, eliminating any symbolic links, relative paths (. or ..), and resolving them to their actual destination.
-If realpath encounters an error (e.g., the symbolic link points to a non-existent target), it returns NULL and sets errno.
-THerefore, the function first uses the realpath function to resolve the symbolic link to its absolute, canonical path. This means that realpath follows the symbolic link and returns the actual target file or directory that the symbolic link points to.
-The resolved path is then compared to a list of restricted directories (/etc, /root). If the resolved path starts with any of these restricted directories, the symbolic link is considered invalid.
-If the symbolic link is valid, the function returns 0; otherwise, it returns 1.
+- **`is_invalid_symlink` Function**
 
-![Figure 12 The ll command](images/isvalidslink.png){ width=60% }
+The second function, `is_invalid_symlink`, enhances the validation of symbolic links by resolving the actual path of the symbolic link using the `realpath` function. It then checks if the resolved path points to restricted directories, such as `/etc` or `/root`. If the resolved path starts with any of these restricted directories, the function returns `1`, indicating that the symbolic link is invalid and should not be allowed. This helps ensure that sensitive system files are not inadvertently exposed through symbolic links.
 
-The secure_copy_file function is updated to include the previous 2 functions. So that before proceeding with the copy, it first checks if the input and output files are symbolic links and whether they point to restricted directories. If either the input or output file is a symbolic link pointing to a restricted directory, the function aborts the operation and prints an error message. If no issues are found, it proceeds with the usual file read/write operations and the confirmation step.
+The `realpath` function resolves the absolute path of a symbolic link or file by following all symbolic links in the path and returning the final target. It provides the canonicalized absolute pathname of the file, eliminating any symbolic links or relative paths (like `.` or `..`) and resolving them to their actual destination. If `realpath` encounters an error (for example, if the symbolic link points to a non-existent target), it returns `NULL` and sets `errno`.
 
-![Figure 13 The ll command](images/updated_copyfile.png){ width=60% }
+In the `is_invalid_symlink` function, `realpath` is called first to resolve the symbolic link to its absolute, canonical path. This means `realpath` follows the symbolic link and returns the actual target file or directory that the symbolic link points to. The resolved path is then compared to a list of restricted directories, including `/etc` and `/root`. If the resolved path starts with any of these restricted directories, the symbolic link is considered invalid and the function returns `1`. If the symbolic link is valid, meaning it does not point to a restricted directory, the function returns `0`. This function plays a critical role in improving security by preventing symbolic links that point to sensitive or system-critical directories.
 
+![Figure 12 The `is_invalid_symlink` function](images/isvalidslink.png){ width=60% }
 
-![Figure 14 The ll command](images/the_patch.png){ width=60% }
+The `secure_copy_file` function is updated to include the previous 2 functions. So that before proceeding with the copy, it first checks if the input and output files are symbolic links and whether they point to restricted directories. If either the input or output file is a symbolic link pointing to a restricted directory, the function aborts the operation and prints an error message. If no issues are found, it proceeds with the usual file read/write operations and the confirmation step.
+
+![Figure 13 The `secure_copy_file` function](images/updated_copyfile.png){ width=60% }
+
+The following screenshot illustrates the result of running the command with a symbolic link to /etc/shadow, which is restricted by the patch.
+
+In this screenshot, we attempt to create a symbolic link `(symlink_to_etc.txt)` pointing to /etc/shadow, a sensitive system file.
+We run the `ln` command to create the symbol link `(symlink_to_etc.txt)` pointing to /etc/shadow. Then, when attempting to run the file_copier command, the program correctly detects that the symbolic link points to a restricted directory `(/etc)` and prevents the file copy operation. The error messages confirm that symbolic links to restricted directories are disallowed, and the contents of `test_out1.txt` remain empty, as the copy operation was blocked.
+
+![Figure 14 Running the patched code](images/the_patch.png){ width=60% }
 
 
 
