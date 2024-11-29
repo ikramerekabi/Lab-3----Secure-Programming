@@ -161,11 +161,45 @@ Other improvements to the program addressing developers, users and stakeholders'
 - The user can also be informed about potential misuse to improve security awareness. For instance, it might include warnings about not copying sensitive files and provide tips on how to handle files securely.
 
 # Patched vulnerability
-The main patch of the vulnerability is a better handling of the symbolic links, by checking them and verifying if the name files that are passed as arguments are actually symbol links or not. 
-This can be achieved through:
-Two functions are added to the code:
-Te first function is the 
-![Figure 11 The ll command](images/proofetcshadowcopied.png){ width=60% }
+
+The primary patch for the vulnerability involves better handling of symbolic links. Specifically, it checks whether the files passed as arguments are symbolic links or regular files, preventing potential exploitation through symbolic link attacks. 
+
+This is achieved by adding two functions to the code.
+
+- `is_symlink` Function**
+
+The `is_symlink` function checks if a given file is a symbolic link. A symbolic link is a special type of file that points to another file or directory, allowing for redirection of operations.
+
+To understand how the `is_symlink` function works, we first need to explain how the `lstat` system call operates. `lstat` is used to retrieve information about a file without following symbolic links. It populates a `stat` structure with various data, such as the file's size, permissions, and type. The most important aspect here is the `S_ISLNK` macro, which checks if the file type is a symbolic link by inspecting the `st_mode` field in the `stat` structure.
+
+If the file is a symbolic link, `lstat` returns `0` (success). If the file is not a symbolic link, `lstat` returns `-1` and sets `errno` to indicate the error (e.g., the file does not exist).
+
+Now that the `lstat` is well defined, we can explain how the `is_symlink` Function Works:
+
+- The function calls the `lstat` system call on the provided file path.
+- The `stat` structure returned by `lstat` contains various file attributes, including the file type.
+- The `S_ISLNK` macro is used to check if the file type is a symbolic link by evaluating the `st_mode` field of the `stat` structure.
+- If the file is a symbolic link, the function returns `1`. If it is not a symbolic link, it returns `0`.
+- If `lstat` returns `-1`, indicating an error (e.g., if the file does not exist), the function prints an error message and returns `-1`.
+
+![Figure 11 The ll command](images/issymlink.png){ width=60% }
+
+The second function is the `is_invalid_symlink` function, it enhances the symbolic link validation by resolving the actual path of the symbolic link using realpath and then checking if the resolved path points to restricted directories like /etc or /root. If the resolved path starts with one of these restricted directories, it returns 1, indicating that the symbolic link is invalid and should not be allowed. It ensures that sensitive system files are not inadvertently exposed.
+The function uses realpath, which resolves the absolute path of a symbolic link or a file, following all symbolic links in the path and returning the final target.
+It returns the canonicalized absolute pathname of the file, eliminating any symbolic links, relative paths (. or ..), and resolving them to their actual destination.
+If realpath encounters an error (e.g., the symbolic link points to a non-existent target), it returns NULL and sets errno.
+THerefore, the function first uses the realpath function to resolve the symbolic link to its absolute, canonical path. This means that realpath follows the symbolic link and returns the actual target file or directory that the symbolic link points to.
+The resolved path is then compared to a list of restricted directories (/etc, /root). If the resolved path starts with any of these restricted directories, the symbolic link is considered invalid.
+If the symbolic link is valid, the function returns 0; otherwise, it returns 1.
+
+![Figure 12 The ll command](images/isvalidslink.png){ width=60% }
+
+The secure_copy_file function is updated to include the previous 2 functions. So that before proceeding with the copy, it first checks if the input and output files are symbolic links and whether they point to restricted directories. If either the input or output file is a symbolic link pointing to a restricted directory, the function aborts the operation and prints an error message. If no issues are found, it proceeds with the usual file read/write operations and the confirmation step.
+
+![Figure 13 The ll command](images/updated_copyfile.png){ width=60% }
+
+
+![Figure 14 The ll command](images/the_patch.png){ width=60% }
 
 
 
