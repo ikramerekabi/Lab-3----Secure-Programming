@@ -103,16 +103,26 @@ The `wait_confirmation` function is key to this vulnerability because it introdu
 To demonstrate the exploitation of this vulnerability, a symbolic link was created using the `ln` command, linking a file named `test_in2.txt` to the sensitive `/etc/shadow` file on the system. The exploit was carried out on the university's server, where both the malicious `ln` command and the vulnerable `file_copier` program were executed in parallel using `tmux`. This setup allowed for precise timing, as the symbolic link had to be created before the 3-second timeout expired in the `wait_confirmation` function, which was responsible for the race condition. By linking the input file to `/etc/shadow` just before the timeout expired, the attacker could confirm the operation (by pressing "y") and successfully copy the contents of `/etc/shadow` to the output file.
 
 The command used to exploit the vulnerability was:
-
-`ln -s /etc/shadow test_in2.txt`
-
+```
+ln -s /etc/shadow test_in2.txt
+```
 This command creates a symbolic link, test_in2.txt, pointing to the system's shadow file. The vulnerable file_copier program was then run with the following command:
-`./file_copier -i test_in2.txt -o test_out.txt`
-
+```
+./file_copier -i test_in2.txt -o test_out.txt
+```
 Since the input file `test_in2.txt` was a symbolic link, the program followed the link and tried to copy the contents of `/etc/shadow`, instead of `test_in2.txt`. The program did not validate the symbolic link, and the malicious redirection of the file copy operation succeeded.
 
-The following screenshots illustrate the exploit:
-![Figure 6: source code for hidden_functions.c for project_v1](images/hiddenfunctions.v1.png){ width=60% }
+To illustrate the exploit; the end goal was to copy the content of `/etc/shadow` into the `test_out.txt`
+
+The following screenshots demonstrate the exploit:
+We first run the program with two test files; an input test file `test_in2.txt` and an output test file `test_out.txt`
+![Figure 7: Running the Program](images/attack.png){ width=60% }
+We then run the ln command at the same time as the program is running before returning `y` into the original program running.
+![Figure 8: The ln command](images/commandranforexploit.png){ width=60% }
+To check the linking, we run the ll command output in the directory, and it shows that that test_in2.txt is indeed a symbolic link pointing to `/etc/shadow`.
+![Figure 9: The ll command](images/llrights.png){ width=60% }
+Then, we check the content of `test_out.txt`, and it shows the content of `/etc/shadow`, which proves that the vulnerability succeeded.
+![Figure 9: The ll command](images/proofetcshadowcopied.png){ width=60% }
 
 
 
