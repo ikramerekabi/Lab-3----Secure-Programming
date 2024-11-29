@@ -146,7 +146,19 @@ After close analysis of the functionality of this program, while we were not abl
 
 # Solutions
 
-TO DO: explain theories to solve the vulnerability
+Given the exploit, some mitigation tehcniques of the vulnerability in the `file_copier` program needs to be done by implementing strong defenses against symbolic link exploitation and race conditions, along with enhancing general security practices in file handling. The following can prevent this kind of exploit and make the program more resilient:
+
+- One of the major vulnerabilities in the program is that it does not check whether an input file is a symbolic link. To handle this, `lstat` system calls among others that will have to be used instead of `stat` to make a proper difference between a regular file and a symbolic link. The idea would be to refuse the symbolic links as an input in order not to allow attackers to redirect file operations to some sensitive system files. For instance, prior to opening the input file, the program can perform an `lstat` check, making sure the file is of regular type or is explicitly authorized.
+- The delay imposed by the `wait_confirmation()` function enhances the possibility of a TOCTOU vulnerability. The best way of mitigating this is immediately after validating the input and output paths, opening them and using the file descriptors throughout the program so it can operate on the exact files that were intended for operation in case the filesystem changes during execution. Additionally, the program can use the O_NOFOLLOW flag when opening files to prevent symbolic links.
+- To minimize the attack surface, the program should limit input and output files to specific, authorized directories. For instance, if the program can only have all files reside in a known working directory, exploitation of sensitive system files would be prevented. Another possible solution for directory attacks involves path sanitization and validation, such that they do not contain components like symbolic links that reference outside the allowed directory.
+- The program should be more strict regarding privileges when reading and writing a file. If the program is running from elevated privileges, the program should ignore such privileges to enfore the least privilege principle, disabling the possibility of an attacker of accessing root. 
+- In order to remove the race condition brought about by `wait_confirmation()` the prompt for confirmation should be done prior to any file validation or operations. In this way, user confirmation does not give an opportunity for attackers to act on the file system. Another solution is allowing the program to lock files using advisory or mandatory file-locking mechanisms to ensure that no modifications occur between validation and operation.
+
+Other improvements to the program addressing developers, users and stakeholders' interests include:
+
+- By implementing thorough logging within the `file_copier` program, it could help trace malicious behavior or attempts to exploit vulnerabilities. For example, logs can record details of the file paths, file attributes, and operations performed. Such monitoring of logs can be done by administrators to detect and respond to suspicious activities like repeated attempts at trying to access restricted files.
+- Static analysis tools for finding vulnerabilities, such as unchecked symbolic links, TOCTOU vulnerabilities, or unsafe memory handling, can be done to handle problems actively. Vulnerabilities in the code also need regular reviews and security audits to ensure that secure coding practices are followed.
+- The user can also be informed about potential misuse to improve security awareness. For instance, it might include warnings about not copying sensitive files and provide tips on how to handle files securely.
 
 # Patched vulnerability
 
