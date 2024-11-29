@@ -43,14 +43,24 @@ lang: en-GB
 <!-- Sections are denoted with a "#" at the very beginning of the line. Do not number the sections! Pandoc will handle that part -->
 # Introduction
 
-TO DO: Explain your analysis protocol (threats identified, ideas, assessment method…)
+The present laboratory project explores the functionalities, vulnerabilities and mitigation techniques of the `project_v0` program, while also diving a bit into the general idea and security implementations of the `project_v1` program. The analysis was done by first looking at the source code provided to understand the general functioning of both programs. Then, some vulnerabilities for `project_v0` were found, like the ability to do symbolic linking and  the time-of-check to time-of-use threat. For the `project_v1` program there were some technical issues regarding the lack of packages and tools to successfully exploit it. Therefore, the source code was studied and vulnerabilities were detected. These are discussed as well as some constraints implemented compared to `project_v0`. The exploitation of the `project_v0` program was made through the command line and it is further described in this paper. Finally, we present some mitigation techniques that could be used to avoid the exploitation presented in this project.
 
 <!-- Each new "#" denote a lower section level, "##": subsection; "###": subsubsection; and so on. -->
 # Programs
 
-TO DO: Explain how each program works
+Two programs are under analysis in this paper.
 
 ## Project_v0
+
+This is a file copier program compiled with a main function, some helper functions and hidden functions. The main purpose of this program is to get two files from the user, from which it reads the contents of one and writes these into the other file. The execution of this program is denoted as:
+
+```
+./file_copier -i input_file.txt -o output_file.txt
+```
+
+The flags `-i` and `-o` are there to explicitly declare the input and output file of the user. 
+
+![The research centre Christian Huygens](images/main.v0.png){ width=60% }
 
 ## Project_v1
 
@@ -148,4 +158,3 @@ But it can also be on the web:
 \end{verbatim}
 \end{comment}
 ```
-
