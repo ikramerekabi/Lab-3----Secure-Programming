@@ -96,6 +96,26 @@ Lastly, on Fig. 6 we can see the contents of the `hidden_functions.c` file which
 
 ## Project_v0: issues and exploitations
 
+The vulnerability in the given code stems from improper handling of symbolic links during file operations, combined with a **race condition** introduced by the `wait_confirmation` function. Specifically, the program does not properly validate whether the input file is a symbolic link before performing the file copy operation, which allows to exploit the program by using symbolic links to redirect the input file to sensitive files on the system, such as `/etc/shadow`.
+
+The `wait_confirmation` function is key to this vulnerability because it introduces a **3-second delay** to give the user a chance to confirm or reject the operation. During this waiting period, we can manipulate the input file by creating a symbolic link to a sensitive file before the program asks for user input. This allows to trick the program into copying the contents of a critical file, such as `/etc/shadow`, instead of the intended input file.
+
+To demonstrate the exploitation of this vulnerability, a symbolic link was created using the `ln` command, linking a file named `test_in2.txt` to the sensitive `/etc/shadow` file on the system. The exploit was carried out on the university's server, where both the malicious `ln` command and the vulnerable `file_copier` program were executed in parallel using `tmux`. This setup allowed for precise timing, as the symbolic link had to be created before the 3-second timeout expired in the `wait_confirmation` function, which was responsible for the race condition. By linking the input file to `/etc/shadow` just before the timeout expired, the attacker could confirm the operation (by pressing "y") and successfully copy the contents of `/etc/shadow` to the output file.
+
+The command used to exploit the vulnerability was:
+
+`ln -s /etc/shadow test_in2.txt`
+
+This command creates a symbolic link, test_in2.txt, pointing to the system's shadow file. The vulnerable file_copier program was then run with the following command:
+`./file_copier -i test_in2.txt -o test_out.txt`
+
+Since the input file `test_in2.txt` was a symbolic link, the program followed the link and tried to copy the contents of `/etc/shadow`, instead of `test_in2.txt`. The program did not validate the symbolic link, and the malicious redirection of the file copy operation succeeded.
+
+The following screenshots illustrate the exploit:
+![Figure 6: source code for hidden_functions.c for project_v1](images/hiddenfunctions.v1.png){ width=60% }
+
+
+
 ## Project_v1: issues
 
 After close analysis of the functionality of this program, while we were not able to exploit it we wanted to comment on its vulnerabilities. This is common in programs where there is improper handling of inputs, insufficient checks on memory and file operations, and potential flaws in the way resources are managed. Some of the vulnerabilities encountered are:
