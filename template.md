@@ -209,6 +209,7 @@ We run the `ln` command to create the symbol link `(symlink_to_etc.txt)` pointin
 Other patches can be made (but are not included in the code to avoid adding more than one functionality in the same code). For example:
 
 - Locking Mechanism to Prevent Race Conditions:
+  
 We can modify the file copy mechanism by adding this functionality, which ensures that the symbolic link cannot be altered while the confirmation prompt is waiting for user input. A file lock is acquired before the file copy operation begins, and the lock is released only after the operation is complete. This prevents malicious interference during the crucial validation step.
 The function to be added can look like this:
 	int lock_file(const char *file_path) {
@@ -227,7 +228,8 @@ The function to be added can look like this:
 	    return lock_fd; // Lock successful
 	}
 
-- Timeout Handling for User Confirmation
+- Timeout Handling for User Confirmation:
+  
 The current system relies on a fixed 3-second timeout to confirm the user's intent. This patch modifies the logic to handle timeouts more effectively. If the user fails to respond within the specified time, the operation is aborted automatically.
 
 The modified wait_confirmation function can be modified as follows to ensure that the program exits if the user does not confirm within the designated timeout period:
