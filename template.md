@@ -98,11 +98,18 @@ Lastly, on Fig. 6 we can see the contents of the `hidden_functions.c` file which
 
 ## Project_v1: issues
 
+After close analysis of the functionality of this program, while we were not able to exploit it we wanted to comment on its vulnerabilities. This is common in programs where there is improper handling of inputs, insufficient checks on memory and file operations, and potential flaws in the way resources are managed. Some of the vulnerabilities encountered are:
+
+- The `parse_options()` to allocate the path names for the input and output files calculates the size without considering the extra byte for the null terminator, which may lead to a buffer overflow when `strcpy()` is used to copy the input strings. The program does not check or sanitize the file path from the user input at all, so it would be vulnerable to directory traversal attacks, symbolic link attack, or allow access to critical files.
+- The `secure_hash_file()` function has several file access-related bugs. For example, there is a Time-of-Check-to-Time-of-Use (TOCTOU) bug after the access check that is supposed to ensure that the permissions of the file are handled properly. An attacker could switch the file out (e.g., through symbolic links) to point to a sensitive or unintended location during the gap between the check of access permissions and the actual opening or writing to the file. This can result in unauthorized overwriting of files, data corruption, or leakage of sensitive information. Additionally there are risks withing the functions `fopen()` in `secure_hash_file()`, `write_file()`, and `compute_confirmation()`, which lack error checking to verify the if the file modifications were successful. For example, if the file descriptor is NULL, the program's behavior may be undefined.
+- The way `compute_confirmation()` handles the user files provided, it does not account for excessively big files, which could enable attacks like DoS or heap exhaustion. Also, there might be some pathways were memory is not freed, which could lead to memory leakage. 
+- The lack of validation on the output file introduces the risk of symbolic links being exploited to redirect writes to files not intended for writing. This vulnerability is more risky by the TOCTOU vulnerabilities described earlier, in which access checks occur in a different step than actual file operations. This allows an advert to attack these gaps to overwrite systems or applications that use critical files.
+
 # Solutions
 
 TO DO: explain theories to solve the vulnerability
 
-# Patched vulnerabilities
+# Patched vulnerability
 
 # Conclusions
 <!-- You should skip a line before and after a bullet point. You can use whatever symbole you want, "-", "*" ... -->
