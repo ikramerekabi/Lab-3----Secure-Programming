@@ -161,6 +161,13 @@ Other improvements to the program addressing developers, users and stakeholders'
 - The user can also be informed about potential misuse to improve security awareness. For instance, it might include warnings about not copying sensitive files and provide tips on how to handle files securely.
 
 # Patched vulnerability
+The main patch of the vulnerability is a better handling of the symbolic links, by checking them and verifying if the name files that are passed as arguments are actually symbol links or not. 
+This can be achieved through:
+Two functions are added to the code:
+Te first function is the 
+![Figure 11 The ll command](images/proofetcshadowcopied.png){ width=60% }
+
+
 
 # Conclusions
 <!-- You should skip a line before and after a bullet point. You can use whatever symbole you want, "-", "*" ... -->
