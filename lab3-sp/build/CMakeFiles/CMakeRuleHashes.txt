@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+e98cae492f9185ef14fba06e0b3cae95 /home/group-2-h/lab3-sp/project_v0/compile_commands.json
+92bb4eb205deda8dcdce0c02883c4d78 CMakeFiles/database
