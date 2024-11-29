@@ -162,6 +162,8 @@ Other improvements to the program addressing developers, users and stakeholders'
 
 # Patched vulnerability
 
+## Primary Patch
+
 The primary patch for the vulnerability involves better handling of symbolic links. Specifically, it checks whether the files passed as arguments are symbolic links or regular files, preventing potential exploitation through symbolic link attacks. 
 
 This is achieved by adding two functions to the code.
@@ -202,7 +204,56 @@ We run the `ln` command to create the symbol link `(symlink_to_etc.txt)` pointin
 
 ![Figure 14 Running the patched code](images/the_patch.png){ width=60% }
 
+## Other patches
 
+Other patches can be made (but are not included in the code to avoid adding more than one functionality in the same code). For example:
+
+- Locking Mechanism to Prevent Race Conditions:
+We can modify the file copy mechanism by adding this functionality, which ensures that the symbolic link cannot be altered while the confirmation prompt is waiting for user input. A file lock is acquired before the file copy operation begins, and the lock is released only after the operation is complete. This prevents malicious interference during the crucial validation step.
+The function to be added can look like this:
+	int lock_file(const char *file_path) {
+	    int lock_fd = open(file_path, O_RDONLY);
+	    if (lock_fd == -1) {
+	        perror("Failed to lock file");
+	        return -1;
+	    }
+	
+	    if (flock(lock_fd, LOCK_EX | LOCK_NB) == -1) {
+	        perror("Failed to acquire lock");
+	        close(lock_fd);
+	        return -1;
+	    }
+	
+	    return lock_fd; // Lock successful
+	}
+
+- Timeout Handling for User Confirmation
+The current system relies on a fixed 3-second timeout to confirm the user's intent. This patch modifies the logic to handle timeouts more effectively. If the user fails to respond within the specified time, the operation is aborted automatically.
+
+The modified wait_confirmation function can be modified as follows to ensure that the program exits if the user does not confirm within the designated timeout period:
+
+	int wait_confirmation(const char *in, const char *out) {
+	    time_t start_time = time(NULL);
+	    int confirmation_timeout = 3; // 3 seconds timeout
+	
+	    printf("You are about to copy file %s in %s. Are you sure? (y/N)\n", in, out);
+	
+	    while (1) {
+	        char user_input = getchar();
+	
+	        if (user_input == 'y' || user_input == 'Y') {
+	            return 0; // Proceed with file copy
+	        } else if (user_input == 'n' || user_input == 'N') {
+	            return 1; // Cancel the operation
+	        }
+	
+	        // Check if timeout has expired
+	        if (time(NULL) - start_time > confirmation_timeout) {
+	            fprintf(stderr, "Timeout reached. Operation aborted.\n");
+	            return 2; // Timeout expired
+	        }
+	    }
+	}
 
 # Conclusions
 
